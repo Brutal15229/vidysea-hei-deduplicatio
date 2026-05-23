@@ -1,0 +1,722 @@
+{
+  "_SCHEMA_VERSION": "university_schema_v8 — updated 2026-04-02. _id = fp2 (readable string, not ObjectId). name_normalized DEPRECATED → use nameClean. All enum values lowercase. public_or_private REMOVED → use campus_type.ownership. source_tier description aligned with Core Rules v8. admission_type gains round_based. culinary_skills typo fixed.",
+
+  "_SCORING_NOTE": "data_completeness_score is computed by pipeline using weighted field registry. Identity fields (name, country, state, city, institution_type, website) have weight 4-5. Student-decision fields (tuition, rankings, intakes, scholarships) have weight 2-4. See CORE_RULES.md Section on Completeness Scoring for full registry.",
+
+  "_id": {
+    "type": "str",
+    "required": true,
+    "description": "Primary key. Always identical to fp2. Format: '{countryCode3_lower}|{state_normalized}|{city_normalized}|{nameClean}'. e.g. 'usa|massachusetts|cambridge|harvard university'. Set explicitly by pipeline — NOT MongoDB auto-generated ObjectId. Collision = exact duplicate → merge only. Changes if state/city is corrected — expected and correct."
+  },
+
+  "basic_info": {
+    "name": {
+      "type": "str",
+      "required": true,
+      "description": "Full official university name in English. Never abbreviated. Primary display field. min_length=2. Proper case for display (e.g. 'Harvard University', not 'harvard university')."
+    },
+    "name_original": {
+      "type": "str | None",
+      "required": false,
+      "description": "Native script name. e.g. Cyrillic, Arabic, CJK. Null for English-only institutions. Stored for traceability when name was translated."
+    },
+    "name_normalized": {
+      "type": "str | None",
+      "required": false,
+      "description": "DEPRECATED — use nameClean (top-level). Kept for backward compatibility only. Do not write new data to this field. Lowercase ASCII-transliterated name, stop-words removed."
+    },
+
+    "institution_type": {
+      "type": "Literal['university','deemed_university','college','autonomous_college','community_college','open_university','institute_national_importance','research_institute','polytechnic','training_centre','medical_institute','management_institute','standalone_institution','academy','seminary','university_system'] | None",
+      "required": true,
+      "description": "Institution category. ALL values lowercase. Use most specific applicable value. 'university_system' = multi-campus system record (e.g. University of California system). Programs NEVER attach to university_system records — only to individual campus records."
+    },
+    "slug": {
+      "type": "str",
+      "required": true,
+      "description": "URL-safe kebab-case identifier. e.g. 'harvard-university'. Generated once, never changed."
+    },
+    "website": {
+      "type": "HttpUrl | None",
+      "required": false,
+      "description": "Official university website. Must start with https://. Never a third-party URL. Null when institution has no web presence — common for small colleges. When null, fp1 is also null and Layer 5 (AI semantic sweep) provides dedup coverage."
+    },
+    "email": {
+      "type": "EmailStr | None",
+      "required": false,
+      "description": "General contact email. Validate format."
+    },
+    "phone": {
+      "type": "str | None",
+      "required": false,
+      "description": "Contact phone with country code. e.g. '+1 617 495 1000'."
+    },
+    "description": {
+      "type": "str | None",
+      "required": false,
+      "description": "General institutional overview. Plain text, no HTML."
+    },
+    "affiliated_university": {
+      "type": "str | None",
+      "required": false,
+      "description": "Parent or partner institution name if applicable. For affiliated colleges, also set parent_university_id."
+    },
+    "medium_of_instruction": {
+      "type": "str | None",
+      "required": false,
+      "description": "Primary language(s) of teaching. e.g. 'English' or 'Ukrainian, English'."
+    },
+    "logo_url": {
+      "type": "HttpUrl | None",
+      "required": false,
+      "description": "Public URL for university logo image."
+    },
+    "university_aliases": {
+      "type": "List[str]",
+      "required": false,
+      "description": "Short names, acronyms, variant spellings, and pre-translation names. Used for search matching. e.g. ['KNU', 'Taras Shevchenko University']. Merged across sources with $addToSet."
+    },
+    "university_vector_context": {
+      "type": "str | None",
+      "required": false,
+      "description": "ML semantic search context string. Written by ML pipeline only. Never overwrite from scraper."
+    },
+    "location": {
+      "type": "List[dict]",
+      "required": true,
+      "description": "Array with single location object. All geo data lives here.",
+      "items": {
+        "address": {
+          "type": "str | None",
+          "required": false,
+          "description": "Full street address."
+        },
+        "city": {
+          "type": "str",
+          "required": true,
+          "description": "City name in English. From city alias map — canonical name only. Proper case for display."
+        },
+        "state": {
+          "type": "str",
+          "required": true,
+          "description": "State/province name in English. Full name, never abbreviated ('California' not 'CA'). Proper case for display."
+        },
+        "country": {
+          "type": "str",
+          "required": true,
+          "description": "Country full name in English. e.g. 'United States', not 'UA' or 'USA'."
+        },
+        "continent": {
+          "type": "str | None",
+          "required": false,
+          "description": "Continent name. e.g. 'Europe', 'Asia', 'North America'."
+        },
+        "zip": {
+          "type": "str | None",
+          "required": false,
+          "description": "Postal or ZIP code."
+        },
+        "geonames_id": {
+          "type": "str | None",
+          "required": false,
+          "description": "GeoNames numeric ID for this location."
+        },
+        "country_id": {
+          "type": "str",
+          "required": true,
+          "description": "ISO 3166-1 alpha-2 country code. e.g. 'IN', 'US', 'UA'. max_length=2."
+        },
+        "state_id": {
+          "type": "str | None",
+          "required": false,
+          "description": "GeoNames ID or slug linking to states collection."
+        },
+        "city_id": {
+          "type": "str | None",
+          "required": false,
+          "description": "GeoNames ID or slug linking to cities collection."
+        },
+        "country_vector_context": {
+          "type": "str | None",
+          "required": false,
+          "description": "ML semantic string for country. Written by ML pipeline only."
+        },
+        "country_aliasing_vector": {
+          "type": "List[float]",
+          "required": false,
+          "description": "1536-dim embedding vector. Written by ML pipeline only."
+        }
+      }
+    }
+  },
+
+  "campus_type": {
+    "ownership": {
+      "type": "Literal['public','private_non_profit','private_for_profit','government_aided','private_aided','public_private'] | None",
+      "required": false,
+      "description": "Ownership model. ALL values lowercase. 'government_aided' = private institution receiving govt funding. This is the primary ownership field — legacy public_or_private has been removed."
+    },
+    "delivery_mode": {
+      "type": "Literal['on_campus','online','hybrid'] | None",
+      "required": false,
+      "description": "Primary mode of study offered. ALL values lowercase."
+    }
+  },
+
+  "financials": {
+    "tuition_domestic": {
+      "type": "float | None",
+      "required": false,
+      "description": "Annual domestic/in-state tuition in native currency. University-level default — program.program_fees_domestic overrides per program."
+    },
+    "tuition_international": {
+      "type": "float | None",
+      "required": false,
+      "description": "Annual international tuition in native currency. University-level default."
+    },
+    "tuition_currency": {
+      "type": "str | None",
+      "required": false,
+      "description": "ISO 4217 currency code for tuition fields. e.g. 'USD', 'GBP', 'AUD'. Always uppercase ISO code."
+    },
+    "tuition_domestic_usd": {
+      "type": "float | None",
+      "required": false,
+      "description": "Annual domestic tuition converted to USD. Auto-computed by pipeline."
+    },
+    "tuition_international_usd": {
+      "type": "float | None",
+      "required": false,
+      "description": "Annual international tuition converted to USD. Auto-computed by pipeline."
+    },
+    "room_and_board": {
+      "type": "float | None",
+      "required": false,
+      "description": "Annual room and board cost in native currency."
+    },
+    "net_price": {
+      "type": "float | None",
+      "required": false,
+      "description": "Average net price after financial aid in native currency."
+    },
+    "financial_aid_pct": {
+      "type": "float | None",
+      "required": false,
+      "description": "Percentage of students receiving any financial aid. e.g. 0.65 = 65%."
+    }
+  },
+
+  "admissions_stats": {
+    "sat_25th_percentile": {
+      "type": "int | None",
+      "required": false,
+      "description": "SAT composite 25th percentile score. USA-specific."
+    },
+    "sat_75th_percentile": {
+      "type": "int | None",
+      "required": false,
+      "description": "SAT composite 75th percentile score. USA-specific."
+    },
+    "act_25th_percentile": {
+      "type": "int | None",
+      "required": false,
+      "description": "ACT composite 25th percentile. USA-specific."
+    },
+    "act_75th_percentile": {
+      "type": "int | None",
+      "required": false,
+      "description": "ACT composite 75th percentile. USA-specific."
+    }
+  },
+
+  "status": {
+    "type": "Literal['active','inactive'] | None",
+    "required": true,
+    "description": "Current operational status. ALL values lowercase."
+  },
+
+  "accreditation": {
+    "type": "List[dict]",
+    "required": false,
+    "description": "Accreditation records. Critical for visa eligibility checks.",
+    "items": {
+      "body": {
+        "type": "str",
+        "required": true,
+        "description": "Accrediting body name. e.g. 'NAAC', 'AACSB', 'QAA'."
+      },
+      "type": {
+        "type": "Literal['regional','national','specialized'] | None",
+        "required": false,
+        "description": "Scope of accreditation. ALL values lowercase."
+      },
+      "accredited_since": {
+        "type": "str | None",
+        "required": false,
+        "description": "Year accreditation was first granted. Format: YYYY."
+      },
+      "valid_until": {
+        "type": "str | None",
+        "required": false,
+        "description": "Expiry year. Format: YYYY. Null means indefinite or ongoing."
+      }
+    }
+  },
+
+  "academics": {
+    "student_faculty_ratio": {
+      "type": "str | None",
+      "required": false,
+      "description": "Ratio string. e.g. '11.2:1' or '15:1'."
+    },
+    "programmes": {
+      "type": "List[str]",
+      "required": false,
+      "description": "Array of program fp2 string refs (matching program _id). Managed by program pipeline. Do not write from scraper."
+    },
+    "all_programmes_list": {
+      "type": "dict",
+      "required": false,
+      "description": "Grouped list of program names by degree type. Convenience field for display.",
+      "items": {
+        "bachelors": {
+          "type": "List[str]",
+          "required": false,
+          "description": "Bachelor degree program names."
+        },
+        "masters": {
+          "type": "List[str]",
+          "required": false,
+          "description": "Master degree program names."
+        },
+        "phd": {
+          "type": "List[str]",
+          "required": false,
+          "description": "Doctoral program names."
+        },
+        "diploma": {
+          "type": "List[str]",
+          "required": false,
+          "description": "Diploma program names."
+        },
+        "certificate": {
+          "type": "List[str]",
+          "required": false,
+          "description": "Certificate program names."
+        },
+        "culinary_skills": {
+          "type": "List[str]",
+          "required": false,
+          "description": "Culinary skills program names."
+        },
+        "other": {
+          "type": "List[str]",
+          "required": false,
+          "description": "Any program type not covered above — associate, vocational, professional etc."
+        }
+      }
+    }
+  },
+
+  "admissions": {
+    "acceptance_rate": {
+      "type": "str | None",
+      "required": false,
+      "description": "Overall acceptance rate as decimal string. e.g. '0.145' = 14.5%."
+    },
+    "international_acceptance_rate": {
+      "type": "str | None",
+      "required": false,
+      "description": "Acceptance rate for international applicants. e.g. '10-20%'."
+    },
+    "admission_type": {
+      "type": "Literal['fixed_deadline','rolling','round_based'] | None",
+      "required": false,
+      "description": "University-wide admissions pattern. ALL values lowercase. round_based added in v8."
+    },
+    "application_deadline": {
+      "type": "str | None",
+      "required": false,
+      "description": "Default deadline. Format: 'DD MM YYYY'. Use 'rolling' for rolling admissions."
+    },
+    "application_opening_date": {
+      "type": "str | None",
+      "required": false,
+      "description": "Date applications open. Format: 'DD MM YYYY'."
+    },
+    "application_fee": {
+      "type": "float | None",
+      "required": false,
+      "description": "Application fee in native currency for domestic students."
+    },
+    "application_fee_currency": {
+      "type": "str | None",
+      "required": false,
+      "description": "ISO 4217 currency code. e.g. 'USD', 'INR', 'GBP'."
+    },
+    "application_fee_usd": {
+      "type": "float | None",
+      "required": false,
+      "description": "Application fee converted to USD. Auto-computed."
+    },
+    "program_dates_independent": {
+      "type": "bool",
+      "required": false,
+      "description": "False = all programs share university-level dates. True = each program has its own dates. Default: false."
+    },
+    "available_intakes": {
+      "type": "List[Literal['fall','spring','summer','winter']] | None",
+      "required": false,
+      "description": "Intake seasons. ALL values lowercase. fall = Aug-Sep, spring = Jan-Feb, summer = May-Jun, winter = Dec."
+    },
+    "standardized_test_policy": {
+      "type": "Literal['required','optional','test_blind','not_applicable'] | None",
+      "required": false,
+      "description": "University-wide standardized test policy. ALL values lowercase."
+    },
+    "international_students": {
+      "visa_required": {
+        "type": "bool | None",
+        "required": false,
+        "description": "Whether a student visa is required for international applicants."
+      },
+      "visa_type": {
+        "type": "str | None",
+        "required": false,
+        "description": "Visa category. e.g. 'f-1', 'tier 4 (student)', 'student visa (subclass 500)'."
+      },
+      "language_test_required": {
+        "type": "bool | None",
+        "required": false,
+        "description": "Whether a language test is required at university level."
+      },
+      "language_test_waiver_conditions": {
+        "type": "str | None",
+        "required": false,
+        "description": "Conditions under which language test is waived."
+      },
+      "qualifying_test_waiver": {
+        "type": "str | None",
+        "required": false,
+        "description": "Conditions under which subject/qualifying tests are waived."
+      },
+      "application_fee": {
+        "type": "float | None",
+        "required": false,
+        "description": "Application fee for international students in native currency."
+      },
+      "application_fee_currency": {
+        "type": "str | None",
+        "required": false,
+        "description": "ISO 4217 currency code for international application fee."
+      },
+      "application_fee_usd": {
+        "type": "float | None",
+        "required": false,
+        "description": "International application fee converted to USD."
+      },
+      "general_eligibility": {
+        "type": "str | None",
+        "required": false,
+        "description": "General eligibility note for international applicants."
+      },
+      "other_conditions": {
+        "type": "str | None",
+        "required": false,
+        "description": "Remaining university-level conditions for international students."
+      },
+      "standardized_test_policy": {
+        "type": "Literal['required','optional','test_blind','not_applicable'] | None",
+        "required": false,
+        "description": "Override for international applicants only. Null when same as university-wide policy. ALL values lowercase."
+      },
+      "special_quota_countries": {
+        "type": "dict",
+        "required": false,
+        "description": "Country-specific or bloc-specific quota arrangements. Key is country/bloc name.",
+        "items": {
+          "quota_type": {
+            "type": "Literal['bilateral_agreement','regional_quota','government_scheme','reserved_seats'] | None",
+            "required": false,
+            "description": "Nature of the quota. ALL values lowercase."
+          },
+          "seats_reserved": { "type": "str | None", "required": false, "description": "Seats reserved. e.g. '5% of total intake'." },
+          "application_fee": { "type": "float | None", "required": false, "description": "Application fee for this country/bloc." },
+          "application_fee_currency": { "type": "str | None", "required": false, "description": "ISO 4217 currency code." },
+          "visa_conditions": { "type": "str | None", "required": false, "description": "Visa conditions for this country/bloc." },
+          "language_test_waiver": { "type": "bool | None", "required": false, "description": "Whether language test is waived." },
+          "fee_structure": {
+            "type": "Literal['domestic','saarc_rate','international','custom'] | None",
+            "required": false,
+            "description": "Which fee structure applies. ALL values lowercase."
+          },
+          "other_conditions": { "type": "str | None", "required": false, "description": "Any remaining conditions." }
+        }
+      }
+    }
+  },
+
+  "outcomes": {
+    "graduation_rate": { "type": "str | None", "required": false, "description": "Completion percentage. e.g. '70%'." },
+    "continuation_rate": { "type": "str | None", "required": false, "description": "Percentage continuing to second year." },
+    "employment_rate": { "type": "str | None", "required": false, "description": "Percentage in work/study 6-15 months after graduation." },
+    "student_satisfaction": { "type": "str | None", "required": false, "description": "Overall satisfaction score. e.g. '82%' or '4.2/5'." },
+    "median_earnings_after_3_years": { "type": "float | None", "required": false, "description": "Median earnings 3 years post-graduation in native currency." },
+    "median_earnings_after_5_years": { "type": "float | None", "required": false, "description": "Median earnings 5 years post-graduation in native currency." },
+    "median_earnings_after_6_years": { "type": "float | None", "required": false, "description": "Median salary 6 years post-graduation in native currency." },
+    "median_earnings_after_6_years_currency": { "type": "str | None", "required": false, "description": "ISO 4217 currency code for median earnings." },
+    "median_earnings_after_6_years_usd": { "type": "float | None", "required": false, "description": "Median earnings converted to USD." },
+    "avg_salary": { "type": "float | None", "required": false, "description": "Average graduate salary in native currency." },
+    "avg_salary_currency": { "type": "str | None", "required": false, "description": "ISO 4217 currency code for avg_salary." },
+    "avg_salary_usd": { "type": "float | None", "required": false, "description": "avg_salary converted to USD." },
+    "placement_percentage": { "type": "str | None", "required": false, "description": "Percentage of graduating students placed." }
+  },
+
+  "student_life": {
+    "semesters": {
+      "summer_start_date": { "type": "str | None", "required": false, "description": "Typical start of summer/fall semester. Format: 'DD MM YYYY'." },
+      "winter_start_date": { "type": "str | None", "required": false, "description": "Typical start of winter/spring semester. Format: 'DD MM YYYY'." }
+    },
+    "enrollment": {
+      "undergraduate_students": { "type": "str | None", "required": false, "description": "Count of undergraduate students." },
+      "postgraduate_students": { "type": "str | None", "required": false, "description": "Count of postgraduate students." },
+      "phd_students": { "type": "str | None", "required": false, "description": "Count of PhD or doctoral students." },
+      "vocational_students": { "type": "str | None", "required": false, "description": "Count of vocational or diploma students." },
+      "total_students": { "type": "str | None", "required": false, "description": "Total headcount." },
+      "full_time_undergrads": { "type": "str | None", "required": false, "description": "Full-time undergraduate count." },
+      "part_time_undergrads": { "type": "str | None", "required": false, "description": "Part-time undergraduate count." }
+    }
+  },
+
+  "additional_fields": {
+    "living_costs": {
+      "average_per_year": { "type": "float | None", "required": false, "description": "Total estimated living cost per year in native currency." },
+      "average_per_year_currency": { "type": "str | None", "required": false, "description": "ISO 4217 currency code." },
+      "average_per_year_usd": { "type": "float | None", "required": false, "description": "Living cost per year converted to USD." },
+      "on_campus_accommodation": { "type": "float | None", "required": false, "description": "University housing cost per year in native currency." },
+      "on_campus_accommodation_currency": { "type": "str | None", "required": false, "description": "ISO 4217 currency code." },
+      "on_campus_accommodation_usd": { "type": "float | None", "required": false, "description": "On-campus accommodation converted to USD." },
+      "off_campus_support": { "type": "str | None", "required": false, "description": "Off-campus housing assistance availability." }
+    },
+    "rankings": {
+      "qs_world": { "type": "str | None", "required": false, "description": "QS World rank. Exact number or range. e.g. '42' or '101-150'." },
+      "qs_world_year": { "type": "str | None", "required": false, "description": "Year of QS ranking. Format: YYYY." },
+      "qs_world_date": { "type": "str | None", "required": false, "description": "Same as qs_world_year. Write same value to both." },
+      "times": { "type": "str | None", "required": false, "description": "Times Higher Education rank." },
+      "times_year": { "type": "str | None", "required": false, "description": "Year of THE ranking. Format: YYYY." },
+      "times_date": { "type": "str | None", "required": false, "description": "Same as times_year. Write same value to both." },
+      "nirf": { "type": "str | None", "required": false, "description": "NIRF rank. India-specific. Exact number." },
+      "nirf_date": { "type": "str | None", "required": false, "description": "Date of NIRF ranking." },
+      "other_rankings": { "type": "str | None", "required": false, "description": "Name of ONE additional ranking source." },
+      "other_rankings_rank": { "type": "str | None", "required": false, "description": "Exact rank from other_rankings source." },
+      "other_rankings_year": { "type": "str | None", "required": false, "description": "Year of other ranking. Format: YYYY." }
+    },
+    "age_limit": { "type": "str | None", "required": false, "description": "Age-related admission restrictions." },
+    "campus_size": { "type": "str | None", "required": false, "description": "Physical campus size. e.g. '170 acres'." },
+    "industry_tieups": { "type": "str | None", "required": false, "description": "Corporate and industry partnerships." },
+    "international_student_ratio": { "type": "str | None", "required": false, "description": "Ratio of international students. e.g. '33%'." },
+    "internship": { "type": "str | None", "required": false, "description": "Internship availability and details." },
+    "on_campus_jobs": { "type": "str | None", "required": false, "description": "Student on-campus employment info." },
+    "post_study_work": { "type": "str | None", "required": false, "description": "Post-study work permit information." },
+    "scholarship_details": { "type": "str | None", "required": false, "description": "Overview of scholarships and financial aid." },
+    "work_while_study": { "type": "str | None", "required": false, "description": "Regulations for working while enrolled." },
+    "career_support": { "type": "str | None", "required": false, "description": "Career services and placement support." },
+    "climate": { "type": "str | None", "required": false, "description": "Weather description for the city or region." },
+    "dependent_visa": { "type": "str | None", "required": false, "description": "Dependent or family visa information." },
+    "fast_track_option": { "type": "str | None", "required": false, "description": "Accelerated program options available." },
+    "housing": { "type": "str | None", "required": false, "description": "On-campus and off-campus housing overview." },
+    "university_application_response_time_in_weeks": { "type": "float | None", "required": false, "description": "Average admission decision turnaround in weeks." },
+    "location_type": {
+      "type": "Literal['urban','rural','semi_urban'] | None",
+      "required": false,
+      "description": "Campus location type. ALL values lowercase."
+    }
+  },
+
+  "sources": {
+    "type": "List[dict]",
+    "required": true,
+    "description": "Single source of truth for all source attribution, freshness, and captured data. One entry per portal/source. Min 1 entry required at lock time.",
+    "items": {
+      "source": {
+        "type": "str",
+        "required": true,
+        "description": "External registry or source name (uppercase). e.g. 'ROR', 'WHED', 'IPEDS'."
+      },
+      "source_tier": {
+        "type": "int",
+        "required": true,
+        "description": "Source Priority Ladder tier (1-5). 1=University own website (ground truth). 2=Visa/Accreditation portals (binary facts — DEQAR, CRICOS, NAAC). 3=Top global/national rankings ONLY (QS, THE, ARWU, CWUR). 4=Government education portals (IPEDS, UCAS, PDDikti). 5=Aggregators (StudyPortals, UniPage, ApplyBoard — fill empty slots, replaceable by higher tiers). RULE: Empty slot → any tier can fill. Occupied slot → only lower tier number overwrites."
+      },
+      "source_id": {
+        "type": "str | None",
+        "required": false,
+        "description": "ID in that external source. e.g. ROR ID, WHED ID, AISHE code."
+      },
+      "source_name": {
+        "type": "str",
+        "required": true,
+        "description": "Portal/source identifier (lowercase). e.g. 'ror', 'aishe-directory', 'whed', 'qs-rankings'."
+      },
+      "source_url": {
+        "type": "HttpUrl | None",
+        "required": false,
+        "description": "Exact URL scraped for this record."
+      },
+      "scraped_at": {
+        "type": "datetime | None",
+        "required": false,
+        "description": "When WE scraped this data. ISO 8601."
+      },
+      "source_data_date": {
+        "type": "str | None",
+        "required": false,
+        "description": "When the SOURCE last updated their data. Format: YYYY-MM-DD."
+      },
+      "data_age_days": {
+        "type": "int | None",
+        "required": false,
+        "description": "How old the source data is in days. Auto-computed."
+      },
+      "run_id": {
+        "type": "str | None",
+        "required": false,
+        "description": "Pipeline run identifier. Format: '{phase}_{YYYYMMDD}'."
+      },
+      "external_ids_from_this_source": {
+        "type": "dict | None",
+        "required": false,
+        "description": "External IDs this source provided. e.g. {'aishe_code': 'U-0335'}."
+      },
+      "source_captured_data": {
+        "type": "dict",
+        "required": false,
+        "description": "ALL fields from this source as flat dict. Schema fields use dot-path keys (e.g. 'basic_info.name': 'Harvard'). Non-schema fields use raw field name. RULE: Nothing from the source should be lost. Append-only — never delete or modify."
+      }
+    }
+  },
+
+  "parent_university_id": {
+    "type": "str | None",
+    "required": false,
+    "description": "For affiliated colleges: fp2 string (_id) of parent university. e.g. 'ind|delhi|new delhi|university of delhi'. For EC6 cross-border campuses: fp2 of main campus. Null for independent institutions."
+  },
+  "parent_university_name": {
+    "type": "str | None",
+    "required": false,
+    "description": "Human-readable parent university name. Denormalized for display."
+  },
+
+  "last_updated": {
+    "type": "datetime | None",
+    "required": false,
+    "description": "Last update timestamp. Written by system pipeline."
+  },
+  "frequent_last_updated": {
+    "type": "datetime | None",
+    "required": false,
+    "description": "Timestamp of last frequent-fields update."
+  },
+
+  "dedup_meta": {
+    "domain_fingerprint": {
+      "type": "str | None",
+      "required": false,
+      "description": "Root domain for dedup (domainClean). e.g. 'harvard.edu'. Root domain + TLD only — all subdomains stripped."
+    },
+    "merge_history": {
+      "type": "List[str]",
+      "required": false,
+      "description": "Records merged into this one. Format: 'canonicalName|reason|layer'."
+    },
+    "confidence_score": {
+      "type": "float",
+      "required": false,
+      "description": "Confidence in record accuracy. 0.0 to 1.0. Default: 0.0."
+    },
+    "manual_review_flag": {
+      "type": "bool",
+      "required": false,
+      "description": "True = record needs human verification."
+    },
+    "last_seen_at": {
+      "type": "dict | None",
+      "required": true,
+      "description": "Per-source last-seen timestamps. Key = source name, value = ISO 8601 datetime. Updated every time a portal refreshes this record."
+    },
+    "field_source": {
+      "type": "dict | None",
+      "required": false,
+      "description": "Tracks which source provided each field value. Key = dot-path field, value = {source, tier}. e.g. {'basic_info.name': {'source': 'IPEDS', 'tier': 4}}."
+    },
+    "discovered_via": {
+      "type": "str | None",
+      "required": false,
+      "description": "How this university was discovered. 'university_portal' = found in portal_*_universities. 'program_portal' = discovered during program ingestion as an orphan. Null for pre-existing records."
+    }
+  },
+
+  "original_language": {
+    "type": "str",
+    "required": false,
+    "description": "ISO 639-1 language code of source data. e.g. 'en', 'uk', 'zh'. Default: 'en'."
+  },
+  "translated": {
+    "type": "bool",
+    "required": false,
+    "description": "True if AI was used to translate fields to English. Default: false."
+  },
+
+  "data_completeness_score": {
+    "type": "float",
+    "required": false,
+    "description": "Weighted completeness score 0.0-1.0. Computed by pipeline using weighted field registry from CORE_RULES.md."
+  },
+
+  "meta": {
+    "data_completeness": {
+      "type": "Literal['stub','partial','complete']",
+      "required": false,
+      "description": "stub = score < 0.3 | partial = 0.3-0.7 | complete = score > 0.7. ALL values lowercase."
+    },
+    "created_at": { "type": "datetime | None", "required": false, "description": "Record creation timestamp. ISO 8601." },
+    "updated_at": { "type": "datetime | None", "required": false, "description": "Last modification timestamp. ISO 8601." },
+    "frequent_last_updated": { "type": "datetime | None", "required": false, "description": "Last update of frequent-refresh fields." },
+    "less_frequent_last_updated": { "type": "datetime | None", "required": false, "description": "Last update of less-frequent fields." }
+  },
+
+  "_IDENTITY_FIELDS_NOTE": "Fields below are the university identity layer — used for fast lookup, cross-portal dedup, and cross-referencing.",
+
+  "countryCode3": {
+    "type": "str",
+    "required": true,
+    "description": "ISO 3166-1 alpha-3 country code lowercase. e.g. 'usa', 'ind', 'gbr'. Must match basic_info.location[0].country_id equivalent."
+  },
+
+  "nameClean": {
+    "type": "str",
+    "required": true,
+    "description": "Output of clean_string(basic_info.name). Lowercase, ASCII-normalized, no punctuation. e.g. 'harvard university'. Used as dedup token in fp1/fp2. Recomputed after every standardization pass. See CORE_RULES.md Section 4 for clean_string() spec."
+  },
+
+  "fp1": {
+    "type": "str | None",
+    "required": false,
+    "description": "Domain-based fingerprint. Format: '{countryCode3}|{domainClean}|{nameClean}'. e.g. 'usa|harvard.edu|harvard university'. Null when no domain. Immutable after creation. Unique sparse index."
+  },
+
+  "fp2": {
+    "type": "str",
+    "required": true,
+    "description": "Geo-based fingerprint = _id = primary dedup key. Format: '{countryCode3}|{state_normalized_lower}|{city_normalized_lower}|{nameClean}'. e.g. 'usa|massachusetts|cambridge|harvard university'. Computed AFTER all normalization (city alias, state expansion, clean_string). All segments lowercase."
+  },
+
+  "oldIds": {
+    "type": "List[str]",
+    "required": false,
+    "description": "Source-prefixed IDs for cross-reference. Format: '{source}:{id}'. e.g. ['ipeds:166027', 'ror:05tby3y60', 'whed:IAU-007039']. Derived from sources[].source_id."
+  },
+
+  "_REMOVED_FIELDS_NOTE": "public_or_private REMOVED in v8 — use campus_type.ownership. name_normalized DEPRECATED — use nameClean.",
+  "_SCHEMA_CHANGES_v8": "1. _id changed from ObjectId to string fp2. 2. name_normalized deprecated. 3. source_tier description aligned with Core Rules. 4. All enum values lowercase. 5. public_or_private removed. 6. culinary_skills typo fixed. 7. admission_type gains round_based. 8. institution_type gains university_system. 9. sources[].source_captured_data is flat dict (consistent format). 10. parent_university_id changed from ObjectId to string fp2. 11. academics.programmes changed from List[ObjectId] to List[str] (fp2 refs). 12. dedup_meta.discovered_via added. 13. dedup_meta.last_seen_at made required. 14. dedup_meta.field_source value format changed to {source, tier} dict."
+}

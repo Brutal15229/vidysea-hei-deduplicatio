@@ -1,0 +1,315 @@
+{
+  "_SCHEMA_VERSION": "program_schema_v4 — updated 2026-04-02. mode values lowercase (full_time, part_time). captured_data changed to flat dict (matching university schema). All enum values lowercase. university_id changed from ObjectId to string fp2. admission_type lowercase with round_based added.",
+
+  "_id": {
+    "type": "str",
+    "required": true,
+    "description": "Primary key. Always identical to fp2. Format: '{country_code3}|{state}|{city}|{university_name_clean}|{name_clean}|{program_type}'. e.g. 'usa|california|stanford|stanford university|bachelor of arts in psychology|bachelors'. All segments lowercase. Use '_' as placeholder when state or city is unknown. Set explicitly by pipeline — NOT MongoDB auto-generated. Collision = exact duplicate → merge only."
+  },
+
+  "fp2": {
+    "type": "str",
+    "required": true,
+    "description": "Location-based dedup fingerprint. Always identical to _id. First 4 pipe-separated segments always match universityId exactly. P3 integrity check: every record must satisfy (_id == fp2)."
+  },
+
+  "fp1": {
+    "type": "str | None",
+    "required": false,
+    "description": "Domain-based stable fingerprint. Format: '{country_code3}|{domain_clean}|{university_name_clean}|{name_clean}|{program_type}'. Written once on insert, never changed. Null when university domain unknown."
+  },
+
+  "name": {
+    "type": "str",
+    "required": true,
+    "description": "Full standard English program name. No abbreviations ever. min_length=2. e.g. 'Master of Science in Mechanical Engineering'. Proper case for display. Higher-tier source wins on merge."
+  },
+  "name_clean": {
+    "type": "str",
+    "required": true,
+    "description": "Output of clean_string(name). Lowercase, diacritics stripped, punctuation stripped. Used for ALL Jaccard dedup comparisons. See CORE_RULES.md Section 4 for clean_string() spec."
+  },
+  "name_original": {
+    "type": "str | None",
+    "required": false,
+    "description": "Native script program name for non-English programs. Stored for traceability."
+  },
+
+  "university_id": {
+    "type": "str",
+    "required": true,
+    "description": "fp2 string reference to the universities collection _id. e.g. 'usa|california|stanford|stanford university'. Must exist — no orphan programs allowed (P1 check). Updated when university merges occur (cascade)."
+  },
+  "university_name": {
+    "type": "str",
+    "required": true,
+    "description": "Full canonical English name of the offering university. Denormalized from university record. Keep in sync via pipeline."
+  },
+  "university_website": {
+    "type": "str | None",
+    "required": true,
+    "description": "Official root domain of the university. Denormalized from university record. Null when university has no website."
+  },
+  "university_type": {
+    "type": "Literal['university','deemed_university','college','autonomous_college','community_college','open_university','institute_national_importance','research_institute','polytechnic','training_centre','medical_institute','management_institute','standalone_institution','academy','seminary','university_system'] | None",
+    "required": false,
+    "description": "Institution type from parent university. Denormalized for filtering. ALL values lowercase."
+  },
+
+  "country": {
+    "type": "str",
+    "required": true,
+    "description": "Full English country name. e.g. 'United States'. NOT ISO code. Denormalized from university location."
+  },
+  "country_code": {
+    "type": "str | None",
+    "required": false,
+    "description": "ISO 3166-1 alpha-2 country code lowercase. e.g. 'us', 'in', 'gb'."
+  },
+  "state": {
+    "type": "str",
+    "required": true,
+    "description": "Full state/province name. No abbreviations. Denormalized from university location."
+  },
+  "city": {
+    "type": "str",
+    "required": true,
+    "description": "City name. From city alias map. Denormalized from university location."
+  },
+
+  "program_type": {
+    "type": "Literal['bachelors','masters','phd','associate','diploma','pg_diploma','certificate','pg_certificate','culinary','professional','vocational'] | None",
+    "required": true,
+    "description": "Degree level. ALL values lowercase — no exceptions. Classification cascade: direct source map → keyword rules → AI."
+  },
+  "program_category": {
+    "type": "Literal['professional','vocational'] | None",
+    "required": false,
+    "description": "High-level category overlay. ALL values lowercase."
+  },
+  "department": {
+    "type": "str | None",
+    "required": false,
+    "description": "Offering department within the university."
+  },
+  "slug": {
+    "type": "str",
+    "required": true,
+    "description": "URL-safe unique identifier. All lowercase kebab-case. Generated once on insert, never changed."
+  },
+  "aliases": {
+    "type": "List[str]",
+    "required": false,
+    "description": "Alternative names, acronyms, variant spellings from merged sources. Up to 15 entries. Merged with $addToSet."
+  },
+  "program_description": {
+    "type": "str | None",
+    "required": false,
+    "description": "Full program description. Plain text, no HTML. Higher-tier source preferred."
+  },
+  "program_profile": {
+    "type": "str | None",
+    "required": false,
+    "description": "Shorter program overview. Highlights and USP."
+  },
+  "program_structure": {
+    "type": "str | None",
+    "required": false,
+    "description": "Core courses, electives, thesis breakdown."
+  },
+
+  "duration_in_years": {
+    "type": "float | None",
+    "required": true,
+    "description": "Program length in years. e.g. 2.0, 1.5, 4.0. NOT in fingerprint. Convert months to years (divide by 12). Null only when source provides no duration."
+  },
+  "mode": {
+    "type": "Literal['full_time','part_time','online','hybrid'] | None",
+    "required": false,
+    "description": "Mode of study. ALL values lowercase with underscores. NOT in fingerprint. Default: array on single record when same program has multiple modes. Split into separate records only when single portal lists as separate programs with different fees/curriculum."
+  },
+  "medium_of_instruction": {
+    "type": "str | None",
+    "required": false,
+    "description": "Language of instruction. e.g. 'english', 'hindi'. Lowercase."
+  },
+  "credits_required": {
+    "type": "str | None",
+    "required": false,
+    "description": "Credits needed for graduation. e.g. '120 (US)', '180 (EU)'."
+  },
+  "specialization_areas": {
+    "type": "List[str]",
+    "required": false,
+    "description": "Specific tracks within the program. e.g. ['Robotics', 'Energy Systems']."
+  },
+
+  "accreditation": {
+    "type": "dict | None",
+    "required": false,
+    "description": "Program-level accreditation. Separate from university-level.",
+    "items": {
+      "body": { "type": "str | None", "required": false, "description": "Accrediting body. e.g. 'AACSB', 'ABET'." },
+      "status": { "type": "str | None", "required": false, "description": "Accreditation status. Lowercase." }
+    }
+  },
+
+  "admission_type": {
+    "type": "Literal['fixed_deadline','rolling','round_based'] | None",
+    "required": false,
+    "description": "Admissions pattern. ALL values lowercase. round_based added in v4."
+  },
+  "application_start_date": { "type": "str | None", "required": false, "description": "Date applications open. Format: 'DD MM YYYY'." },
+  "application_deadline": { "type": "str | None", "required": false, "description": "Application deadline. Format: 'DD MM YYYY'. 'rolling' for rolling. 'round 1: DD MM YYYY; round 2: DD MM YYYY' for round-based." },
+  "start_date": { "type": "str | None", "required": false, "description": "Program start date. Format: 'DD-MM-YYYY' or 'month yyyy'. 'rolling' if multiple." },
+  "intake_month_group": { "type": "str | None", "required": false, "description": "Intake month window. e.g. 'jan-feb', 'september'. Lowercase." },
+
+  "application_fee": { "type": "float | None", "required": false, "description": "Program-specific application fee in native currency." },
+  "application_fee_currency": { "type": "str | None", "required": false, "description": "ISO 4217 code. Uppercase." },
+  "application_fee_usd": { "type": "float | None", "required": false, "description": "Application fee converted to USD. Auto-computed." },
+
+  "program_fees_domestic": { "type": "float | None", "required": false, "description": "Annual domestic tuition in native currency." },
+  "program_fees_currency": { "type": "str | None", "required": false, "description": "ISO 4217 code for domestic fees. Uppercase." },
+  "program_fees_domestic_usd": { "type": "float | None", "required": false, "description": "Annual domestic tuition converted to USD. Auto-computed." },
+  "program_fees_international": { "type": "float | None", "required": false, "description": "Annual international tuition in native currency." },
+  "program_fees_international_currency": { "type": "str | None", "required": false, "description": "ISO 4217 code for international fees. Uppercase." },
+  "program_fees_international_usd": { "type": "float | None", "required": false, "description": "Annual international tuition converted to USD. Auto-computed." },
+  "seats_available": { "type": "str | None", "required": false, "description": "Total intake seats. e.g. '60', '~100', '30-40'." },
+
+  "program_ranking": { "type": "str | None", "required": false, "description": "Legacy flat ranking string. Keep for backward compatibility." },
+  "program_ranking_name": { "type": "str | None", "required": false, "description": "Program-specific ranking source." },
+  "program_ranking_year": { "type": "str | None", "required": false, "description": "Year of program ranking. Format: 'YYYY'." },
+  "program_ranking_rank": { "type": "str | None", "required": false, "description": "Exact program rank. Number or range only." },
+
+  "test_scores": {
+    "type": "List[dict]",
+    "required": false,
+    "description": "Required or accepted test scores. One item per test.",
+    "items": {
+      "testname": { "type": "str", "required": true, "description": "Test name. e.g. 'IELTS', 'TOEFL iBT', 'GRE General Test'." },
+      "test_type": { "type": "Literal['language','aptitude','entrance','other'] | None", "required": false, "description": "Category. ALL values lowercase." },
+      "requirements": { "type": "Literal['required','optional','recommended','required_if_applicable'] | None", "required": false, "description": "Whether mandatory. ALL values lowercase." },
+      "cutoff_range": { "type": "str | None", "required": false, "description": "Overall minimum score. e.g. '7.0', '100'." },
+      "section_wise_cutoffs": { "type": "str | None", "required": false, "description": "Per-section minimums." },
+      "required_for": { "type": "Literal['all','international','domestic'] | None", "required": false, "description": "Who must submit. ALL values lowercase." },
+      "test_id": { "type": "str | None", "required": false, "description": "Ref to tests collection." }
+    }
+  },
+
+  "admission_requirements": {
+    "type": "dict | None",
+    "required": false,
+    "description": "Structured admission requirements by student type.",
+    "items": {
+      "native_student": {
+        "program_fees": { "type": "str | None", "required": false, "description": "Fee details for domestic students." },
+        "tests_conditions": { "type": "str | None", "required": false, "description": "Test requirements for domestic students." },
+        "other_conditions": { "type": "str | None", "required": false, "description": "Other admission conditions." }
+      },
+      "international_student": {
+        "program_fees": { "type": "str | None", "required": false, "description": "Fee details for international students." },
+        "tests_conditions": { "type": "str | None", "required": false, "description": "Test requirements for international students." },
+        "visa_conditions": { "type": "str | None", "required": false, "description": "Visa requirements." },
+        "other_conditions": { "type": "str | None", "required": false, "description": "Remaining conditions." },
+        "special_quota_countries": {
+          "type": "dict",
+          "required": false,
+          "description": "Country/bloc quotas at program level. Overrides university-level.",
+          "items": {
+            "program_fees": { "type": "str | None", "required": false, "description": "Fee for this country/bloc." },
+            "tests_conditions": { "type": "str | None", "required": false, "description": "Test conditions." },
+            "visa_conditions": { "type": "str | None", "required": false, "description": "Visa conditions." },
+            "seats_reserved": { "type": "str | None", "required": false, "description": "Seats reserved." },
+            "other_conditions": { "type": "str | None", "required": false, "description": "Other conditions." }
+          }
+        }
+      }
+    }
+  },
+
+  "minimum_GPA_requirement": { "type": "str | None", "required": false, "description": "Minimum GPA with scale. e.g. '3.5/4', '7.5/10'." },
+  "backlogs_accepted": { "type": "str | None", "required": false, "description": "Whether backlogs accepted. e.g. 'no', 'max 2 backlogs'. Lowercase." },
+  "language_test_requirements": { "type": "List[str]", "required": false, "description": "Accepted language tests. e.g. ['TOEFL iBT', 'IELTS', 'Duolingo']." },
+  "language_test_waiver": { "type": "str | None", "required": false, "description": "Waiver conditions. 'na' if no waiver. Lowercase." },
+  "qualifying_test_waiver": { "type": "str | None", "required": false, "description": "Qualifying test waiver conditions. Lowercase." },
+  "optional_test_combinations": { "type": "List[List[str]]", "required": false, "description": "Groups where student picks ONE test from each group." },
+  "subject_requirements": { "type": "str | None", "required": false, "description": "Subject prerequisites." },
+  "letter_of_recommendations": { "type": "str | None", "required": false, "description": "LORs required. e.g. '3', '2'. '0' if not required." },
+  "statement_of_purpose": { "type": "str | None", "required": false, "description": "SOP requirement. e.g. 'required', '1'. '0' if not required. Lowercase." },
+  "interview_required": { "type": "str | None", "required": false, "description": "Interview requirement details. Lowercase." },
+  "work_experience_required_years": { "type": "float | None", "required": false, "description": "Required experience in years. 0 if not required." },
+  "acceptance_rate": { "type": "str | None", "required": false, "description": "Program-level acceptance rate. e.g. '15%'." },
+
+  "scholarship_available": { "type": "str | None", "required": false, "description": "Scholarship details for this program." },
+  "career_outcomes": { "type": "List[str]", "required": false, "description": "Typical roles after completion." },
+
+  "lastSeenAt": {
+    "type": "datetime",
+    "required": true,
+    "description": "Last portal refresh timestamp. Updated on every insert, update, or merge. Staleness policy: 0-12mo = active, 12-24mo = stale (flag), 24+mo = ghost candidate (review). Programs NEVER auto-deleted."
+  },
+
+  "sources": {
+    "type": "List[dict]",
+    "required": true,
+    "description": "Complete source attribution. One entry per portal. Min 1 entry at lock time.",
+    "items": {
+      "source_name": { "type": "str", "required": true, "description": "Portal identifier lowercase. e.g. 'ipeds-completions-2024', 'studyportals'. Never duplicate within one record." },
+      "source_tier": { "type": "int", "required": true, "description": "Tier 1-5 per Source Priority Ladder. See CORE_RULES.md Section 3." },
+      "source_url": { "type": "str | None", "required": false, "description": "URL of specific page scraped." },
+      "source_data_date": { "type": "str | None", "required": false, "description": "Source's data freshness date. Format: YYYY-MM-DD." },
+      "scraped_at": { "type": "datetime | None", "required": false, "description": "When WE scraped. Auto-set." },
+      "run_id": { "type": "str | None", "required": false, "description": "Pipeline run identifier." },
+      "external_ids": { "type": "dict | None", "required": false, "description": "IDs this portal uses. e.g. {'unitid': '100654', 'cip_code': '14.0901'}." },
+      "captured_data": {
+        "type": "dict",
+        "required": false,
+        "description": "ALL raw fields from this source as flat dict. Schema fields use field name as key (e.g. 'program_fees_domestic': '52000'). Non-schema fields use '_source.' prefix (e.g. '_source.award_level_code': '5'). Nothing discarded. CHANGED in v4: was List[dict], now flat dict matching university schema format."
+      }
+    }
+  },
+
+  "original_language": { "type": "str", "required": false, "description": "ISO 639-1 code. Default 'en'. Lowercase." },
+  "translated": { "type": "bool", "required": false, "description": "True if AI translated to English. Default false." },
+
+  "cip_code": { "type": "str | None", "required": false, "description": "IPEDS CIP code. e.g. '14.0901'. USA-specific." },
+  "cip_family": { "type": "str | None", "required": false, "description": "2-digit CIP family. e.g. '14' for Engineering." },
+  "cip_family_title": { "type": "str | None", "required": false, "description": "CIP family label. e.g. 'Engineering'." },
+  "degree_name": { "type": "str | None", "required": false, "description": "Raw degree abbreviation from source. e.g. 'B.Sc.', 'M.S.'." },
+  "subject_area": { "type": "str | None", "required": false, "description": "Broad subject discipline label from portal." },
+  "earnings_1yr_median": { "type": "float | None", "required": false, "description": "Median earnings 1 year post-completion. GOVT_ONLY — Tier 5 cannot write." },
+  "earnings_4yr_median": { "type": "float | None", "required": false, "description": "Median earnings 4 years post-completion. GOVT_ONLY." },
+  "earnings_5yr_median": { "type": "float | None", "required": false, "description": "Median earnings 5 years post-completion. GOVT_ONLY." },
+  "earnings_4yr_median_national": { "type": "float | None", "required": false, "description": "National median for this CIP at 4 years. GOVT_ONLY." },
+  "debt_median": { "type": "float | None", "required": false, "description": "Median student debt at graduation. GOVT_ONLY." },
+  "ipeds_completions_count": { "type": "int | None", "required": false, "description": "Completion count for this CIP at this institution. GOVT_ONLY." },
+
+  "data_completeness_score": {
+    "type": "float",
+    "required": false,
+    "description": "Weighted completeness score 0.0-1.0. See CORE_RULES.md for field registry and weights."
+  },
+
+  "meta": {
+    "type": "dict",
+    "required": false,
+    "description": "Pipeline lifecycle metadata.",
+    "items": {
+      "data_completeness": { "type": "Literal['stub','partial','complete']", "required": false, "description": "stub < 0.3 | partial 0.3-0.7 | complete > 0.7. Lowercase." },
+      "protocol_version": { "type": "str", "required": false, "description": "Lock protocol version. e.g. '2026-04-02-v8.0'." },
+      "created_at": { "type": "datetime | None", "required": false, "description": "Record creation timestamp. Never overwritten." },
+      "updated_at": { "type": "datetime | None", "required": false, "description": "Last modification timestamp." },
+      "frequent_last_updated": { "type": "datetime | None", "required": false, "description": "Last update of frequent-refresh fields." },
+      "less_frequent_last_updated": { "type": "datetime | None", "required": false, "description": "Last update of slow-refresh fields." }
+    }
+  },
+
+  "_REQUIRED_AT_LOCK": "_id (fp2), fp1, name, name_clean, university_id, university_name, university_website, country, state, city, program_type, duration_in_years, slug, lastSeenAt, sources (min 1 entry)",
+  "_FP2_FORMULA": "_id == fp2 == '{country_code3}|{state}|{city}|{university_name_clean}|{name_clean}|{program_type}' — all lowercase, use '_' for unknown",
+  "_FP1_FORMULA": "fp1 == '{country_code3}|{domain_clean}|{university_name_clean}|{name_clean}|{program_type}'",
+  "_UNIVERSITYID": "universityId == first 4 segments of _id == '{country_code3}|{state}|{city}|{university_name_clean}'",
+  "_GOVT_ONLY_FIELDS": "earnings_1yr_median, earnings_4yr_median, earnings_5yr_median, earnings_4yr_median_national, debt_median, ipeds_completions_count — Tier 5 aggregators can NEVER write to these even when empty",
+  "_NO_ABBREVIATIONS": "name and name_clean NEVER contain abbreviations. 'BA' → 'Bachelor of Arts'. No exceptions.",
+  "_ALL_LOWERCASE_ENUMS": "program_type, mode, admission_type, program_category, test_type, requirements, required_for — ALL lowercase. No Title Case.",
+  "_SCHEMA_CHANGES_v4": "1. mode values: Full-time→full_time, Part-time→part_time, Online→online, Hybrid→hybrid. 2. captured_data changed from List[dict] to flat dict. 3. university_id from ObjectId to string fp2. 4. admission_type lowercase + round_based. 5. All enum values lowercase. 6. test_scores.requirements lowercase (Required→required). 7. source_tier description aligned with Core Rules v8."
+}

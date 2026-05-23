@@ -1,0 +1,278 @@
+﻿[
+    {
+        "collection":  "portal_aau_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:17",
+        "finished":  "2026-05-09T09:00:18"
+    },
+    {
+        "collection":  "portal_applyboard_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:18",
+        "finished":  "2026-05-09T09:00:20"
+    },
+    {
+        "collection":  "portal_arwu_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:20",
+        "finished":  "2026-05-09T09:00:21"
+    },
+    {
+        "collection":  "portal_cwur_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:21",
+        "finished":  "2026-05-09T09:00:22"
+    },
+    {
+        "collection":  "portal_deqar_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:22",
+        "finished":  "2026-05-09T09:00:24"
+    },
+    {
+        "collection":  "portal_discover_uni_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:24",
+        "finished":  "2026-05-09T09:00:24"
+    },
+    {
+        "collection":  "portal_eter_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:24",
+        "finished":  "2026-05-09T09:00:26"
+    },
+    {
+        "collection":  "portal_hesa_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:26",
+        "finished":  "2026-05-09T09:00:27"
+    },
+    {
+        "collection":  "portal_hotcoursesabroad_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:27",
+        "finished":  "2026-05-09T09:00:27"
+    },
+    {
+        "collection":  "portal_ipeds_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:27",
+        "finished":  "2026-05-09T09:00:29"
+    },
+    {
+        "collection":  "portal_japan_mext_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:29",
+        "finished":  "2026-05-09T09:00:30"
+    },
+    {
+        "collection":  "portal_jpss_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:30",
+        "finished":  "2026-05-09T09:00:31"
+    },
+    {
+        "collection":  "portal_keystone_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:31",
+        "finished":  "2026-05-09T09:00:32"
+    },
+    {
+        "collection":  "portal_mext_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:32",
+        "finished":  "2026-05-09T09:00:33"
+    },
+    {
+        "collection":  "portal_nzqa_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:33",
+        "finished":  "2026-05-09T09:00:34"
+    },
+    {
+        "collection":  "portal_nzqf_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:34",
+        "finished":  "2026-05-09T09:00:35"
+    },
+    {
+        "collection":  "portal_openalex_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:35",
+        "finished":  "2026-05-09T09:00:39"
+    },
+    {
+        "collection":  "portal_qs_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:39",
+        "finished":  "2026-05-09T09:00:40"
+    },
+    {
+        "collection":  "portal_ror_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:40",
+        "finished":  "2026-05-09T09:00:44"
+    },
+    {
+        "collection":  "portal_scimago_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:44",
+        "finished":  "2026-05-09T09:00:46"
+    },
+    {
+        "collection":  "portal_scorecard_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:46",
+        "finished":  "2026-05-09T09:00:47"
+    },
+    {
+        "collection":  "portal_study_eu_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:47",
+        "finished":  "2026-05-09T09:00:48"
+    },
+    {
+        "collection":  "portal_tec_educationcounts_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:48",
+        "finished":  "2026-05-09T09:00:49"
+    },
+    {
+        "collection":  "portal_unipage_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:00:49",
+        "finished":  "2026-05-09T09:01:01"
+    },
+    {
+        "collection":  "portal_unirank_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:01:01",
+        "finished":  "2026-05-09T09:01:05"
+    },
+    {
+        "collection":  "portal_vanced_new_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:01:05",
+        "finished":  "2026-05-09T09:01:18"
+    },
+    {
+        "collection":  "portal_webometrics_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:01:18",
+        "finished":  "2026-05-09T09:01:28"
+    },
+    {
+        "collection":  "portal_whed_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:01:28",
+        "finished":  "2026-05-09T09:01:35"
+    },
+    {
+        "collection":  "portal_wikidata_universities",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:01:35",
+        "finished":  "2026-05-09T09:01:37"
+    },
+    {
+        "collection":  "portal_discover_uni_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:01:37",
+        "finished":  "2026-05-09T09:01:54"
+    },
+    {
+        "collection":  "portal_findamasters_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:01:54",
+        "finished":  "2026-05-09T09:01:58"
+    },
+    {
+        "collection":  "portal_findaphd_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:01:58",
+        "finished":  "2026-05-09T09:02:00"
+    },
+    {
+        "collection":  "portal_hotcoursesabroad_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:02:00",
+        "finished":  "2026-05-09T09:02:11"
+    },
+    {
+        "collection":  "portal_ipeds_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:02:11",
+        "finished":  "2026-05-09T09:03:10"
+    },
+    {
+        "collection":  "portal_japan_mext_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:03:10",
+        "finished":  "2026-05-09T09:03:11"
+    },
+    {
+        "collection":  "portal_jpss_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:03:11",
+        "finished":  "2026-05-09T09:03:12"
+    },
+    {
+        "collection":  "portal_keystone_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:03:12",
+        "finished":  "2026-05-09T09:06:36"
+    },
+    {
+        "collection":  "portal_nzqf_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:06:36",
+        "finished":  "2026-05-09T09:06:45"
+    },
+    {
+        "collection":  "portal_qs_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:06:45",
+        "finished":  "2026-05-09T09:06:56"
+    },
+    {
+        "collection":  "portal_scorecard_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:06:56",
+        "finished":  "2026-05-09T09:07:22"
+    },
+    {
+        "collection":  "portal_study_eu_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:07:22",
+        "finished":  "2026-05-09T09:07:25"
+    },
+    {
+        "collection":  "portal_studyinjapan_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:07:25",
+        "finished":  "2026-05-09T09:07:27"
+    },
+    {
+        "collection":  "portal_studyportals_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:07:27",
+        "finished":  "2026-05-09T09:11:27"
+    },
+    {
+        "collection":  "portal_ucas_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:11:27",
+        "finished":  "2026-05-09T09:14:27"
+    },
+    {
+        "collection":  "portal_unipage_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:14:27",
+        "finished":  "2026-05-09T09:17:14"
+    },
+    {
+        "collection":  "portal_vanced_new_programs",
+        "status":  "dumped",
+        "started":  "2026-05-09T09:17:14",
+        "finished":  "2026-05-09T09:18:05"
+    }
+]
